@@ -1,0 +1,14 @@
+{
+  "name": "hapi-load-tested",
+  "version": "0.0.0",
+  "description": "load tested hapi server",
+  "main": "index.mjs",
+  "scripts": {
+    "start": "node --experimental-modules index.mjs"
+  },
+  "author": "zach pratt <zach@attackofzach.com> (http://attackofzach.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "hapi": "^17.8.3"
+  }
+}

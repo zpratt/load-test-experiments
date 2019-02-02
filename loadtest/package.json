@@ -1,0 +1,20 @@
+{
+  "name": "loadtest",
+  "version": "0.0.0",
+  "description": "load test of web app frameworks",
+  "main": "index.js",
+  "scripts": {
+    "start": "artillery run -o results.out basic.yml",
+    "view-report": "artillery report results.out"
+  },
+  "keywords": [
+    "artillery",
+    "node",
+    "loadtest"
+  ],
+  "author": "zach pratt <zach@attackofzach.com> (http://attackofzach.com/)",
+  "license": "MIT",
+  "dependencies": {
+    "artillery": "^1.6.0-26"
+  }
+}
