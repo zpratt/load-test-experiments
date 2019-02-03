@@ -9,6 +9,7 @@
   "author": "zach pratt <zach@attackofzach.com> (http://attackofzach.com/)",
   "license": "MIT",
   "dependencies": {
-    "hapi": "^17.8.3"
+    "hapi": "^17.8.3",
+    "pg": "^7.8.0"
   }
 }

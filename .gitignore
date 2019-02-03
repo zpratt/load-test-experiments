@@ -4,3 +4,5 @@ node_modules
 gradle
 gradlew
 *.bat
+*.out
+*.out.html

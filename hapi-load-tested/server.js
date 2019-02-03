@@ -1,5 +1,6 @@
 const Hapi = require('hapi');
-const addRoute = require('./routes/add');
+const addRoute = require('./routes/hello');
+const pizzaRepository = require('./repositories/pizza');
 
 const server = new Hapi.Server({
     port: 8080,
@@ -9,6 +10,14 @@ const server = new Hapi.Server({
 
 async function start() {
     server.route(addRoute);
+
+    server.route({
+        method: 'GET',
+        path: '/pizzas',
+        handler: async () => {
+            return pizzaRepository.findByDescription()
+        }
+    });
 
     await server.start();
 

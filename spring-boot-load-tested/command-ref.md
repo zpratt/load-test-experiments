@@ -1,0 +1,1 @@
+psql -U password -h localhost -W -p 5432

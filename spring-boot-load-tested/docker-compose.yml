@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  api:
+    image: spring-api
+    build:
+      context: "."
+    ports:
+      - "8080:8080"
+    environment:
+      JAVA_ENV: local
+  node-api:
+    image: node-api
+    build:
+      context: "../hapi-load-tested/"
+    ports:
+      - "8080:8080"
+  db:
+    image: postgres:11
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: password
+    ports:
+      - "5432:5432"
