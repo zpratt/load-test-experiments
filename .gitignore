@@ -6,3 +6,5 @@ gradlew
 *.bat
 *.out
 *.out.html
+*.user
+*/out/
