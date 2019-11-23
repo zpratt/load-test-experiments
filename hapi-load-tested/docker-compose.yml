@@ -4,6 +4,42 @@ services:
   api:
     image: hapi-api
     build:
-      context: "."
+      context: .
+    environment:
+      NODE_ENV: "docker"
+      POSTGRES_USER: "flyway"
+      POSTGRES_PASSWORD: "flyway"
     ports:
-      - "8080:8080"
+      - 8080:8080
+    depends_on:
+      - db
+      - flyway
+  generate:
+    image: generate-data
+    build:
+      context: "../generate-data"
+    volumes:
+      - ../migrations/migration:/usr/src/app/output
+  db:
+    image: postgres:9.6.16
+    restart: always
+    environment: 
+      POSTGRES_PASSWORD: "flyway"
+      POSTGRES_USER: "flyway"
+    ports:
+      - 5432:5432
+  pgAdmin:
+    image: dpage/pgadmin4:4.15
+    environment: 
+      PGADMIN_DEFAULT_EMAIL: "admin@local.local"
+      PGADMIN_DEFAULT_PASSWORD: "password"
+    ports:
+      - 8081:80
+  flyway:
+    image: flyway/flyway:6.0.8-alpine
+    volumes:
+      - ../migrations/migration:/flyway/sql
+    depends_on:
+      - db
+      - generate
+    command: -url=jdbc:postgresql://db:5432/postgres -schemas=test -user=flyway -password=flyway -connectRetries=60 migrate
