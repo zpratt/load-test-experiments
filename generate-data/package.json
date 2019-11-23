@@ -1,0 +1,21 @@
+{
+  "name": "generate-data",
+  "version": "0.0.0",
+  "description": "generate test data local load testing",
+  "main": "generate-scenarios-json.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "zach pratt",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "async": "1.5",
+    "base-64": "0.1.0",
+    "chance": "1.0.12",
+    "lodash.times": "4.3.2",
+    "moment": "2.20.1",
+    "mustache": "2",
+    "request": "2.85.0",
+    "uuid": "^3.3.3"
+  }
+}

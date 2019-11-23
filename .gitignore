@@ -8,3 +8,4 @@ gradlew
 *.out.html
 *.user
 */out/
+.vscode
