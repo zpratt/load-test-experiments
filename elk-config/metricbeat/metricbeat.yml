@@ -1,0 +1,39 @@
+metricbeat.config:
+  modules:
+    path: ${path.config}/modules.d/*.yml
+    reload.enabled: false
+
+metricbeat.modules:
+- module: postgresql
+  enabled: true
+  metricsets:
+    - database
+    - bgwriter
+    - activity
+    - statement
+  period: 5s
+  hosts: ["postgres://db:5432?sslmode=disable"]
+  username: flyway
+  password: flyway
+
+metricbeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+
+output.elasticsearch:
+  hosts: ['elasticsearch:9200']
+  protocol: "http"
+
+setup.kibana:
+  host: "kibana:5601"
+  protocol: "http"
+
+setup.dashboards:
+  enabled: true
+  retry:
+    enabled: true
+    maximum: 10
+    interval: 6
+
+xpack.monitoring.enabled: true

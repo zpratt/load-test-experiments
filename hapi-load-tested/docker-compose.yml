@@ -1,45 +1,175 @@
-version: '3'
+version: '3.7'
 
 services:
   api:
     image: hapi-api
+    container_name: api
+    hostname: api
+    labels:
+      co.elastic.logs/fileset.stdout: access
+      co.elastic.metrics/metricsets: process
+      co.elastic.logs/module: system
+      co.elastic.metrics/module: system
+      co.elastic.metrics/processes: ".*"
     build:
       context: .
     environment:
-      NODE_ENV: "docker"
-      POSTGRES_USER: "flyway"
-      POSTGRES_PASSWORD: "flyway"
+      NODE_ENV: docker
+      POSTGRES_USER: flyway
+      POSTGRES_PASSWORD: flyway
     ports:
       - 8080:8080
+    networks:
+      - stack
     depends_on:
       - db
       - flyway
+
   generate:
     image: generate-data
     build:
-      context: "../generate-data"
+      context: ../generate-data
     volumes:
       - ../migrations/migration:/usr/src/app/output
+
   db:
-    image: postgres:9.6.16
+    image: postgres:10.11
+    container_name: database
+    hostname: db
+    labels:
+      co.elastic.logs/fileset.stdout: access
+      co.elastic.metrics/metricsets: status
+      co.elastic.logs/module: postgresql
+      co.elastic.metrics/module: postgresql
     restart: always
-    environment: 
-      POSTGRES_PASSWORD: "flyway"
-      POSTGRES_USER: "flyway"
+    environment:
+      POSTGRES_PASSWORD: flyway
+      POSTGRES_USER: flyway
     ports:
       - 5432:5432
+    networks:
+      - stack
+    command: -c shared_preload_libraries='pg_stat_statements' -c pg_stat_statements.max=10000 -c pg_stat_statements.track=all -c track_activity_query_size=2048
+    volumes:
+      - ../db-init/enable-extensions.sql:/docker-entrypoint-initdb.d/enable-extensions.sql
+
   pgAdmin:
     image: dpage/pgadmin4:4.15
-    environment: 
+    container_name: pgAdmin
+    environment:
       PGADMIN_DEFAULT_EMAIL: "admin@local.local"
       PGADMIN_DEFAULT_PASSWORD: "password"
     ports:
       - 8081:80
+    networks:
+      - stack
+
   flyway:
     image: flyway/flyway:6.0.8-alpine
+    container_name: flyway
+    networks:
+      - stack
     volumes:
       - ../migrations/migration:/flyway/sql
     depends_on:
       - db
       - generate
     command: -url=jdbc:postgresql://db:5432/postgres -schemas=test -user=flyway -password=flyway -connectRetries=60 migrate
+
+  elasticsearch:
+    image: elasticsearch:7.4.2
+    container_name: elasticsearch
+    secrets:
+      - source: elasticsearch.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+    ports: ['9200:9200']
+    networks: ['stack']
+    volumes:
+      - 'es_data:/usr/share/elasticsearch/data'
+    healthcheck:
+      test: curl http://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kibana:
+    image: kibana:7.4.2
+    container_name: kibana
+    labels:
+      co.elastic.logs/fileset.stdout: access
+      co.elastic.metrics/metricsets: status
+      co.elastic.logs/module: kibana
+      co.elastic.metrics/module: kibana
+    ports: ['5601:5601']
+    networks: ['stack']
+    depends_on:
+      - elasticsearch
+    healthcheck:
+      test: curl http://localhost:5601 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  metricbeat:
+    image: docker.elastic.co/beats/metricbeat:7.4.2
+    container_name: metricbeat
+    user: root
+    command: --strict.perms=false -e  # -e flag to log to stderr and disable syslog/file output
+    restart: on-failure
+    secrets:
+      - source: metricbeat.yml
+        target: /usr/share/metricbeat/metricbeat.yml
+    networks:
+      - stack
+    depends_on:
+      - elasticsearch
+      - kibana
+      - db
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+    healthcheck:
+      test: metricbeat test config
+      interval: 30s
+      timeout: 15s
+      retries: 5
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:7.4.2
+    container_name: filebeat
+    hostname: filebeat
+    user: root
+    networks:
+      - stack
+    secrets:
+      - source: filebeat.yml
+        target: /usr/share/filebeat/filebeat.yml
+    volumes:
+      - filebeat:/usr/share/filebeat/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+    command: --strict.perms=false -e
+    restart: on-failure
+    depends_on:
+      - elasticsearch
+      - kibana
+    healthcheck:
+      test: filebeat test config
+      interval: 30s
+      timeout: 15s
+      retries: 5
+
+networks:
+  stack: {}
+volumes:
+  es_data: {}
+  filebeat: {}
+secrets:
+  elasticsearch.yml:
+    file: ../elk-config/elasticsearch/elasticsearch.yml
+  kibana.yml:
+    file: ../elk-config/kibana/kibana.yml
+  metricbeat.yml:
+    file: ../elk-config/metricbeat/metricbeat.yml
+  filebeat.yml:
+    file: ../elk-config/filebeat/filebeat.yml
