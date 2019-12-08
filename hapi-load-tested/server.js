@@ -2,13 +2,15 @@ const Hapi = require('hapi');
 const addRoute = require('./routes/hello');
 const pizzaRepository = require('./repositories/pizza');
 
-const server = new Hapi.Server({
-    port: 8080,
-    host: "0.0.0.0",
-    debug: { request: ['error'] }
-});
-
 async function start() {
+    const server = new Hapi.Server({
+        port: 8080,
+        host: '0.0.0.0',
+        debug: {request: ['error']}
+    });
+
+    await server.initialize();
+
     server.route(addRoute);
 
     server.route({
@@ -17,6 +19,11 @@ async function start() {
         handler: async () => {
             return pizzaRepository.findByDescription()
         }
+    });
+
+    process.on('unhandledRejection', (err) => {
+        console.log(err);
+        process.exit(1);
     });
 
     await server.start();
