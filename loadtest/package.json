@@ -12,9 +12,9 @@
     "node",
     "loadtest"
   ],
-  "author": "zach pratt <zach@attackofzach.com> (http://attackofzach.com/)",
+  "author": "zach pratt",
   "license": "MIT",
   "dependencies": {
-    "artillery": "^1.6.0-26"
+    "artillery": "1.6.0-29"
   }
 }
