@@ -1,5 +1,5 @@
-const Hapi = require('hapi');
-const addRoute = require('./routes/hello');
+const Hapi = require('@hapi/hapi');
+const helloRoute = require('./routes/hello');
 const pizzaRepository = require('./repositories/pizza');
 
 async function start() {
@@ -11,7 +11,7 @@ async function start() {
 
     await server.initialize();
 
-    server.route(addRoute);
+    server.route(helloRoute);
 
     server.route({
         method: 'GET',
